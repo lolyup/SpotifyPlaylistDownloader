@@ -2,6 +2,7 @@ import spotipy
 import yt_dlp
 import os
 from spotipy.oauth2 import SpotifyClientCredentials
+import time
 
 def create_folder(folder_path):
     if not os.path.exists(folder_path):
@@ -17,16 +18,39 @@ def playlist(x):
     return x
 
 # Set up Spotify credentials
-id = input("Enter correct user id from spotify developer portal(code will fail if its wrong): ")
-secret = input("Enter correct client secret from spotify developer portal(code will fail if its wrong): ")
-sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(id, secret))
+def credentials():
+    id = input("Input the correct client id, with no spaces. It wont work if its incorrect: ")
+    secret = input("Input the correct client secret, with no spaces. It wont work if its incorrect: ")
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(id, secret))
+    return sp
 
-def tracklist(play_id):
-    processing = sp.playlist_tracks(play_id)
+def tracklist(play_id, sp):
+    offset = 0
+    limit = 100
     tracklist = []
-    for item in processing['items']:
-        track = item['track']
-        tracklist.append(f"{track['name']} - {track['artists'][0]['name']}")
+    while True:
+        try:
+            processing = sp.playlist_tracks(play_id, offset=offset, limit=limit)
+            
+            if len(processing['items']) == 0:
+                break  
+            
+            for item in processing['items']:
+                track = item['track']
+                if track is not None and track['artists']:
+                    tracklist.append(f"{track['name']} - {track['artists'][0]['name']}")
+            
+            
+            offset += limit
+            
+            time.sleep(2)
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            time.sleep(2)  
+    
+    print(f'The Amount of songs in this: {len(tracklist)}')
+
     return tracklist
 
 def download(query):
@@ -47,15 +71,15 @@ def download(query):
 
 def main():
     # Prompt user for playlist link or ID
+    sp = credentials()
     play = playlist(input("Send playlist link or playlist ID: "))
     
     # Create the downloads folder if it doesn't exist
     create_folder('./downloads')
     
     # Get the list of tracks and download each one
-    tracks = tracklist(play)
+    tracks = tracklist(play, sp)
     for track in tracks:
         download(track)
 
-if __name__ == "__main__":
-    main()
+main()
