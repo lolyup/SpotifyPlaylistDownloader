@@ -11,3 +11,5 @@ pip install yt-dlp
 
 spotipy:
 pip install spotipy
+
+After everything is done open command prompt in the same folder the python file is in(using cd or something) and run the command: python spd.py
